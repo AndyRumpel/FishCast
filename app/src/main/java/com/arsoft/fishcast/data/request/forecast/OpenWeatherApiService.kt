@@ -1,4 +1,4 @@
-package com.arsoft.fishcast.data.request
+package com.arsoft.fishcast.data.request.forecast
 
 import io.reactivex.Observable
 import io.reactivex.Single

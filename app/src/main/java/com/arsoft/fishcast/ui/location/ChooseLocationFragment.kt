@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import com.arellomobile.mvp.MvpAppCompatFragment
 import com.arellomobile.mvp.presenter.InjectPresenter
 import com.arellomobile.mvp.presenter.ProvidePresenter
@@ -21,10 +22,9 @@ import ru.terrakok.cicerone.Router
 import javax.inject.Inject
 
 
-class ChooseLocationFragment : MvpAppCompatFragment(), LocationView, OnMapReadyCallback {
+class ChooseLocationFragment : MvpAppCompatFragment(), LocationView, OnMapReadyCallback{
 
     companion object{
-
         fun getNewInstance() = ChooseLocationFragment().apply {
             arguments = Bundle().apply{
                 //args
@@ -47,10 +47,9 @@ class ChooseLocationFragment : MvpAppCompatFragment(), LocationView, OnMapReadyC
         FishcastApplication.INSTANCE.getAppComponent()!!.inject(this)
     }
 
-
     private lateinit var mapView: MapView
     private lateinit var map: GoogleMap
-    private lateinit var latLng: LatLng
+    private  var latLng: LatLng? = null
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         val view = inflater.inflate(R.layout.fragment_choose_location, container, false)
@@ -58,17 +57,20 @@ class ChooseLocationFragment : MvpAppCompatFragment(), LocationView, OnMapReadyC
         mapView = view.findViewById(R.id.mapView)
         mapView.getMapAsync(this)
         mapView.onCreate(savedInstanceState)
-
         presenter = LocationPresenter(router)
 
         return view
     }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         chooseLocationBtn.setOnClickListener{
-            presenter.onChooseButtonPressed(latLng.latitude, latLng.longitude)
+            if (latLng != null) {
+                presenter.onChooseButtonPressed(latLng!!.latitude, latLng!!.longitude)
+            } else {
+                Toast.makeText(activity, "Put marker on map", Toast.LENGTH_LONG).show()
+            }
         }
-
     }
 
     override fun onMapReady(googleMap: GoogleMap?) {
@@ -79,8 +81,6 @@ class ChooseLocationFragment : MvpAppCompatFragment(), LocationView, OnMapReadyC
             map.clear()
             map.addMarker(MarkerOptions().position(it))
         }
-
-//        map.addMarker(MarkerOptions().position(LatLng(55.8304307, 49.0660806)))
     }
 
     override fun onResume() {

@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-             xmlns:tools="http://schemas.android.com/tools"
-             android:layout_width="match_parent"
-             android:layout_height="match_parent"
-             tools:context=".ui.location.ChooseLocationFragment">
+<FrameLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:context=".ui.location.ChooseLocationFragment"
+        android:background="#4E555A">
 
     <!-- TODO: Update blank fragment layout -->
     <LinearLayout
@@ -13,6 +15,7 @@
             android:gravity="center"
             android:layout_gravity="center">
         <TextView
+                android:textColor="@android:color/darker_gray"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Choose location"/>
@@ -27,8 +30,9 @@
                 android:id="@+id/chooseLocationBtn"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Choose"/>
-    </LinearLayout>
+                android:text="Choose"
+                android:layout_marginEnd="16dp"/>
 
+    </LinearLayout>
 
 </FrameLayout>

@@ -1,4 +1,4 @@
-package com.arsoft.fishcast.data.request
+package com.arsoft.fishcast.data.request.forecast
 
 import android.os.Parcel
 import android.os.Parcelable
@@ -7,7 +7,7 @@ data class Result(
     val cod : Int,
     val message : Double,
     val cnt : Int,
-    val list : kotlin.collections.List<List>,
+    val list : kotlin.collections.List<List<Any?>>,
     val city : City
 ) : Parcelable {
     constructor(parcel: Parcel) : this(
@@ -136,7 +136,7 @@ data class Coord (
     }
 }
 
-data class List(
+data class List<T>(
     val dt : Long,
     val main : Main,
     val weather : kotlin.collections.List<Weather>,
@@ -170,12 +170,12 @@ data class List(
         return 0
     }
 
-    companion object CREATOR : Parcelable.Creator<List> {
-        override fun createFromParcel(parcel: Parcel): List {
+    companion object CREATOR : Parcelable.Creator<List<Any?>> {
+        override fun createFromParcel(parcel: Parcel): List<Any?> {
             return List(parcel)
         }
 
-        override fun newArray(size: Int): Array<List?> {
+        override fun newArray(size: Int): Array<List<Any?>?> {
             return arrayOfNulls(size)
         }
     }
