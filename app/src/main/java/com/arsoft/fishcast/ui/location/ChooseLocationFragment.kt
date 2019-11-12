@@ -2,9 +2,7 @@ package com.arsoft.fishcast.ui.location
 
 
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import android.widget.Toast
 import com.arellomobile.mvp.MvpAppCompatFragment
 import com.arellomobile.mvp.presenter.InjectPresenter
@@ -64,13 +62,28 @@ class ChooseLocationFragment : MvpAppCompatFragment(), LocationView, OnMapReadyC
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        chooseLocationBtn.setOnClickListener{
-            if (latLng != null) {
-                presenter.onChooseButtonPressed(latLng!!.latitude, latLng!!.longitude)
-            } else {
-                Toast.makeText(activity, "Put marker on map", Toast.LENGTH_LONG).show()
+
+        setHasOptionsMenu(true)
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        inflater.inflate(R.menu.accept_location, menu)
+        super.onCreateOptionsMenu(menu, inflater)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+
+        when(item.itemId) {
+            R.id.accept_location_btn -> {
+                if (latLng != null) {
+                    presenter.onChooseButtonPressed(latLng!!.latitude, latLng!!.longitude)
+                } else {
+                    Toast.makeText(activity, "Put marker on map", Toast.LENGTH_LONG).show()
+                }
             }
         }
+
+        return super.onOptionsItemSelected(item)
     }
 
     override fun onMapReady(googleMap: GoogleMap?) {

@@ -1,6 +1,5 @@
 package com.arsoft.fishcast.ui.forecast
 
-
 import android.os.Bundle
 import android.util.Log
 import android.view.*
@@ -13,17 +12,16 @@ import com.arellomobile.mvp.presenter.ProvidePresenter
 import com.arsoft.fishcast.FishcastApplication
 import com.arsoft.fishcast.R
 import com.arsoft.fishcast.adapters.ThreeHoursForecastRecyclerAdapter
-import com.arsoft.fishcast.data.request.location_image.LocationImageResult
 import com.arsoft.fishcast.data.request.forecast.Result
 import com.arsoft.fishcast.mvp.forecast.ThreeHoursForecastPresenter
 import com.arsoft.fishcast.mvp.forecast.ThreeHoursForecastView
-import com.bumptech.glide.Glide
 import kotlinx.android.synthetic.main.fragment_forecast.*
 import ru.terrakok.cicerone.Router
 import javax.inject.Inject
 
 class ForecastFragment : MvpAppCompatFragment(), ThreeHoursForecastView {
 
+    //MARK -
     companion object {
         fun getNewInstance(lat: Double, lon: Double) = ForecastFragment().apply {
             arguments = Bundle().apply {
@@ -33,25 +31,26 @@ class ForecastFragment : MvpAppCompatFragment(), ThreeHoursForecastView {
         }
     }
 
-    @Inject
-    lateinit var router: Router
+    //MARK - injects
+    @Inject lateinit var router: Router
 
+    //MARK - presenter setup
     @InjectPresenter
     lateinit var threeHoursForecastPresenter: ThreeHoursForecastPresenter
-
     @ProvidePresenter
     internal fun providePresenter(): ThreeHoursForecastPresenter {
         return ThreeHoursForecastPresenter(router)
     }
 
+
     init {
         FishcastApplication.INSTANCE.getAppComponent()!!.inject(this)
     }
 
+    //MARK - local variables
     private lateinit var adapter: ThreeHoursForecastRecyclerAdapter
     private lateinit var threeHoursForecastRecyclerView: RecyclerView
     private val TAG = "MyTag"
-    private val LOCATION_IMAGE_REQUEST_URL = "https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference="
 
 
 
@@ -65,8 +64,6 @@ class ForecastFragment : MvpAppCompatFragment(), ThreeHoursForecastView {
         super.onViewCreated(view, savedInstanceState)
         if (arguments != null) {
             threeHoursForecastPresenter.provideForecast(arguments!!.getDouble("lat"), arguments!!.getDouble("lon"))
-            threeHoursForecastPresenter.provideLocationImage(arguments!!.getDouble("lat").toString() + ","
-                                                                    + arguments!!.getDouble("lon").toString())
         }
 
         adapter = ThreeHoursForecastRecyclerAdapter()
@@ -90,24 +87,16 @@ class ForecastFragment : MvpAppCompatFragment(), ThreeHoursForecastView {
         return super.onOptionsItemSelected(item)
     }
 
-    //  View implementation
+
+    //MARK - view implementation
     override fun loadResult(result: Result) {
         adapter.setupForecastList(result)
-    }
-
-    override fun loadLocationImage(locationImageResult: LocationImageResult) {
-        Glide.with(activity!!.applicationContext)
-            .load(LOCATION_IMAGE_REQUEST_URL + locationImageResult.results[0].photos[0].photo_reference + "&key=AIzaSyCuITo9Z0DT3PMiPBbzBJIek5COi5HIN9Y")
-            .centerCrop()
-            .into(locaton_img)
-        location_name_txt.text = locationImageResult.results[0].vicinity
     }
 
     override fun showLoading() {
         loading_cpv.visibility = View.VISIBLE
         threeHoursForecastRecyclerView.visibility = View.INVISIBLE
         location_name_txt.visibility = View.INVISIBLE
-        locaton_img.visibility = View.INVISIBLE
     }
 
     override fun hideLoadind() {
@@ -123,7 +112,6 @@ class ForecastFragment : MvpAppCompatFragment(), ThreeHoursForecastView {
     override fun showForecast() {
         threeHoursForecastRecyclerView.visibility = View.VISIBLE
         location_name_txt.visibility = View.VISIBLE
-        locaton_img.visibility = View.VISIBLE
         adapter.notifyDataSetChanged()
     }
 

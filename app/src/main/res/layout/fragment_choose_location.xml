@@ -7,32 +7,9 @@
         tools:context=".ui.location.ChooseLocationFragment"
         android:background="#4E555A">
 
-    <!-- TODO: Update blank fragment layout -->
-    <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:gravity="center"
-            android:layout_gravity="center">
-        <TextView
-                android:textColor="@android:color/darker_gray"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Choose location"/>
-
         <com.google.android.gms.maps.MapView
                 android:id="@+id/mapView"
                 android:layout_width="match_parent"
-                android:layout_height="420dp"/>
-
-        <Button
-                android:layout_marginTop="16dp"
-                android:id="@+id/chooseLocationBtn"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Choose"
-                android:layout_marginEnd="16dp"/>
-
-    </LinearLayout>
+                android:layout_height="match_parent"/>
 
 </FrameLayout>
