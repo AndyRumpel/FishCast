@@ -1,0 +1,552 @@
+Index: app/src/main/java/com/arsoft/fishcast/data/models/ThreeHoursForecastModel.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/arsoft/fishcast/data/models/ThreeHoursForecastModel.kt	(revision bacb54dab17d5fa50e0ee13667a96335655924c8)
++++ app/src/main/java/com/arsoft/fishcast/data/models/ThreeHoursForecastModel.kt	(date 1572989548764)
+@@ -4,5 +4,6 @@
+     val temperature: String,
+     val weatherDescription: String,
+     val time: String,
+-    val date: String
++    val date: String,
++    val icon: String
+ )
+\ No newline at end of file
+Index: app/src/main/java/com/arsoft/fishcast/adapters/ThreeHoursForecastRecyclerAdapter.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/arsoft/fishcast/adapters/ThreeHoursForecastRecyclerAdapter.kt	(revision bacb54dab17d5fa50e0ee13667a96335655924c8)
++++ app/src/main/java/com/arsoft/fishcast/adapters/ThreeHoursForecastRecyclerAdapter.kt	(date 1572989601810)
+@@ -3,6 +3,7 @@
+ import android.view.LayoutInflater
+ import android.view.View
+ import android.view.ViewGroup
++import android.widget.ImageView
+ import android.widget.TextView
+ import androidx.recyclerview.widget.RecyclerView
+ import com.arsoft.fishcast.R
+@@ -10,9 +11,11 @@
+ import com.arsoft.fishcast.data.models.ThreeHoursForecastModel
+ import com.arsoft.fishcast.utils.MyDateTimeFormatter
+ import com.arsoft.fishcast.utils.TextConverter
++import com.bumptech.glide.Glide
+ 
+ class ThreeHoursForecastRecyclerAdapter: RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+ 
++
+     private val forecastList: ArrayList<ThreeHoursForecastModel> = ArrayList()
+ 
+     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+@@ -34,7 +37,8 @@
+                         temperature = TextConverter.deleteDigitsAfterDots(main.temp) + "°",
+                         weatherDescription = weather[0].description,
+                         time = MyDateTimeFormatter.timeFormat((1000*dt)),
+-                        date = MyDateTimeFormatter.dateFormat((1000*dt))
++                        date = MyDateTimeFormatter.dateFormat((1000*dt)),
++                        icon = weather[0].icon
+                     )
+                 }
+             )
+@@ -47,13 +51,20 @@
+ 
+     class ThreeHoursForecastViewHolder(itemView: View): RecyclerView.ViewHolder(itemView) {
+ 
++        private val BASE_ICON_URL = "http://openweathermap.org/img/wn/"
++
+         private val temperatureTxt = itemView.findViewById<TextView>(R.id.temperature_txt)
+         private val weatherDescription = itemView.findViewById<TextView>(R.id.weather_description_txt)
+         private val time = itemView.findViewById<TextView>(R.id.time_txt)
+         private val date = itemView.findViewById<TextView>(R.id.date_txt)
++        private val weatherIcon = itemView.findViewById<ImageView>(R.id.weather_icon)
+ 
+         fun bind(model: ThreeHoursForecastModel) {
+ 
++            Glide.with(itemView.context)
++                .load(BASE_ICON_URL + model.icon + "@2x.png")
++                .into(weatherIcon)
++
+             temperatureTxt.text = model.temperature
+             weatherDescription.text = model.weatherDescription
+             time.text = model.time
+Index: app/src/main/java/com/arsoft/fishcast/ui/location/ChooseLocationFragment.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/arsoft/fishcast/ui/location/ChooseLocationFragment.kt	(revision bacb54dab17d5fa50e0ee13667a96335655924c8)
++++ app/src/main/java/com/arsoft/fishcast/ui/location/ChooseLocationFragment.kt	(date 1572901312707)
+@@ -5,6 +5,7 @@
+ import android.view.LayoutInflater
+ import android.view.View
+ import android.view.ViewGroup
++import android.widget.Toast
+ import com.arellomobile.mvp.MvpAppCompatFragment
+ import com.arellomobile.mvp.presenter.InjectPresenter
+ import com.arellomobile.mvp.presenter.ProvidePresenter
+@@ -21,10 +22,9 @@
+ import javax.inject.Inject
+ 
+ 
+-class ChooseLocationFragment : MvpAppCompatFragment(), LocationView, OnMapReadyCallback {
++class ChooseLocationFragment : MvpAppCompatFragment(), LocationView, OnMapReadyCallback{
+ 
+     companion object{
+-
+         fun getNewInstance() = ChooseLocationFragment().apply {
+             arguments = Bundle().apply{
+                 //args
+@@ -47,10 +47,9 @@
+         FishcastApplication.INSTANCE.getAppComponent()!!.inject(this)
+     }
+ 
+-
+     private lateinit var mapView: MapView
+     private lateinit var map: GoogleMap
+-    private lateinit var latLng: LatLng
++    private  var latLng: LatLng? = null
+ 
+     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+         val view = inflater.inflate(R.layout.fragment_choose_location, container, false)
+@@ -58,17 +57,20 @@
+         mapView = view.findViewById(R.id.mapView)
+         mapView.getMapAsync(this)
+         mapView.onCreate(savedInstanceState)
+-
+         presenter = LocationPresenter(router)
+ 
+         return view
+     }
++
+     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+         super.onViewCreated(view, savedInstanceState)
+         chooseLocationBtn.setOnClickListener{
+-            presenter.onChooseButtonPressed(latLng.latitude, latLng.longitude)
++            if (latLng != null) {
++                presenter.onChooseButtonPressed(latLng!!.latitude, latLng!!.longitude)
++            } else {
++                Toast.makeText(activity, "Put marker on map", Toast.LENGTH_LONG).show()
++            }
+         }
+-
+     }
+ 
+     override fun onMapReady(googleMap: GoogleMap?) {
+@@ -79,8 +81,6 @@
+             map.clear()
+             map.addMarker(MarkerOptions().position(it))
+         }
+-
+-//        map.addMarker(MarkerOptions().position(LatLng(55.8304307, 49.0660806)))
+     }
+ 
+     override fun onResume() {
+Index: app/src/main/res/layout/weather_recycler_unit.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/res/layout/weather_recycler_unit.xml	(revision bacb54dab17d5fa50e0ee13667a96335655924c8)
++++ app/src/main/res/layout/weather_recycler_unit.xml	(date 1572989977635)
+@@ -4,10 +4,12 @@
+         xmlns:app="http://schemas.android.com/apk/res-auto"
+         xmlns:tools="http://schemas.android.com/tools"
+         android:layout_width="match_parent"
+-        android:layout_height="wrap_content">
++        android:layout_height="wrap_content"
++        android:background="#4E555A">
+ 
+     <TextView
+             android:text="+32°"
++            android:textColor="@android:color/darker_gray"
+             android:layout_width="wrap_content"
+             android:layout_height="wrap_content"
+             android:id="@+id/temperature_txt" app:layout_constraintStart_toStartOf="parent"
+@@ -15,21 +17,31 @@
+             android:layout_marginTop="16dp"
+             app:layout_constraintTop_toTopOf="parent" android:textSize="24sp" android:layout_marginBottom="16dp"
+             app:layout_constraintBottom_toBottomOf="parent"/>
++
+     <TextView
+-            android:text="Солнечно"
++            android:textColor="@android:color/darker_gray"
++            android:id="@+id/weather_description_txt"
+             android:layout_width="wrap_content"
+             android:layout_height="wrap_content"
+-            android:id="@+id/weather_description_txt" app:layout_constraintStart_toEndOf="@+id/temperature_txt"
+-            android:layout_marginStart="16dp" android:layout_marginTop="8dp" app:layout_constraintTop_toTopOf="parent"
+-            android:layout_marginBottom="8dp" app:layout_constraintBottom_toBottomOf="parent"/>
++            android:layout_marginStart="90dp"
++            android:layout_marginTop="8dp"
++            android:layout_marginBottom="8dp"
++            android:text="Солнечно"
++            app:layout_constraintBottom_toBottomOf="parent"
++            app:layout_constraintStart_toStartOf="parent"
++            app:layout_constraintTop_toTopOf="parent" />
++
+     <TextView
++            android:textColor="@android:color/darker_gray"
+             android:text="13:00"
+             android:layout_width="wrap_content"
+             android:layout_height="wrap_content"
+             android:id="@+id/time_txt" app:layout_constraintEnd_toEndOf="parent" android:layout_marginEnd="16dp"
+             android:layout_marginTop="8dp" app:layout_constraintTop_toTopOf="parent" android:layout_marginBottom="8dp"
+             app:layout_constraintBottom_toBottomOf="parent"/>
++
+     <TextView
++            android:textColor="@android:color/darker_gray"
+             android:text="Сегодня,"
+             android:layout_width="wrap_content"
+             android:layout_height="wrap_content"
+@@ -37,5 +49,15 @@
+             app:layout_constraintBottom_toBottomOf="parent"
+             app:layout_constraintEnd_toStartOf="@+id/time_txt" android:layout_marginEnd="16dp"/>
+ 
++    <ImageView
++            android:id="@+id/weather_icon"
++            android:layout_width="56dp"
++            android:layout_height="56dp"
++            android:layout_marginEnd="24dp"
++            app:layout_constraintBottom_toBottomOf="parent"
++            app:layout_constraintEnd_toStartOf="@+id/date_txt"
++            app:layout_constraintTop_toTopOf="parent"
++            tools:srcCompat="@tools:sample/avatars" />
++
+ 
+ </androidx.constraintlayout.widget.ConstraintLayout>
+\ No newline at end of file
+Index: app/src/main/java/com/arsoft/fishcast/ui/forecast/ForecastFragment.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/arsoft/fishcast/ui/forecast/ForecastFragment.kt	(revision bacb54dab17d5fa50e0ee13667a96335655924c8)
++++ app/src/main/java/com/arsoft/fishcast/ui/forecast/ForecastFragment.kt	(date 1573143145660)
+@@ -3,31 +3,25 @@
+ 
+ import android.os.Bundle
+ import android.util.Log
+-import android.view.LayoutInflater
+-import android.view.View
+-import android.view.ViewGroup
++import android.view.*
+ import android.widget.Toast
+ import androidx.recyclerview.widget.LinearLayoutManager
+ import androidx.recyclerview.widget.RecyclerView
+ import com.arellomobile.mvp.MvpAppCompatFragment
+ import com.arellomobile.mvp.presenter.InjectPresenter
++import com.arellomobile.mvp.presenter.ProvidePresenter
++import com.arsoft.fishcast.FishcastApplication
+ import com.arsoft.fishcast.R
+ import com.arsoft.fishcast.adapters.ThreeHoursForecastRecyclerAdapter
+ import com.arsoft.fishcast.data.request.Result
+ import com.arsoft.fishcast.mvp.forecast.ThreeHoursForecastPresenter
+ import com.arsoft.fishcast.mvp.forecast.ThreeHoursForecastView
++import com.arsoft.fishcast.mvp.location.LocationPresenter
+ import kotlinx.android.synthetic.main.fragment_forecast.*
++import ru.terrakok.cicerone.Router
++import javax.inject.Inject
+ 
+ class ForecastFragment : MvpAppCompatFragment(), ThreeHoursForecastView {
+-    private val TAG = "MyTag"
+-
+-
+-    @InjectPresenter
+-    lateinit var threeHoursForecastPresenter: ThreeHoursForecastPresenter
+-
+-    private lateinit var adapter: ThreeHoursForecastRecyclerAdapter
+-    private lateinit var threeHoursForecastRecyclerView: RecyclerView
+-
+     companion object {
+ 
+         fun getNewInstance(lat: Double, lon: Double) = ForecastFragment().apply {
+@@ -38,6 +32,26 @@
+         }
+ 
+     }
++
++    @Inject
++    lateinit var router: Router
++
++    @InjectPresenter
++    lateinit var threeHoursForecastPresenter: ThreeHoursForecastPresenter
++
++    @ProvidePresenter
++    internal fun providePresenter(): ThreeHoursForecastPresenter {
++        return ThreeHoursForecastPresenter(router)
++    }
++
++    init {
++        FishcastApplication.INSTANCE.getAppComponent()!!.inject(this)
++    }
++
++    private lateinit var adapter: ThreeHoursForecastRecyclerAdapter
++    private lateinit var threeHoursForecastRecyclerView: RecyclerView
++    private val TAG = "MyTag"
++
+     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+         val view = inflater.inflate(R.layout.fragment_forecast, container, false)
+         threeHoursForecastRecyclerView = view.findViewById(R.id.three_hours_forecast_recyclerview)
+@@ -46,7 +60,6 @@
+ 
+     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+         super.onViewCreated(view, savedInstanceState)
+-
+         if (arguments != null) {
+             threeHoursForecastPresenter.provideForecast(arguments!!.getDouble("lat"), arguments!!.getDouble("lon"))
+         }
+@@ -54,7 +67,25 @@
+         adapter = ThreeHoursForecastRecyclerAdapter()
+         threeHoursForecastRecyclerView.adapter = adapter
+         threeHoursForecastRecyclerView.layoutManager = LinearLayoutManager(activity, RecyclerView.VERTICAL, false)
++
++        setHasOptionsMenu(true)
++    }
++
++    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
++        inflater.inflate(R.menu.location_menu, menu)
++        super.onCreateOptionsMenu(menu, inflater)
+     }
++
++    override fun onOptionsItemSelected(item: MenuItem): Boolean {
++
++        when(item.itemId) {
++            R.id.choose_on_map -> threeHoursForecastPresenter.onChooseLocationOnMapClicked()
++        }
++
++        return super.onOptionsItemSelected(item)
++    }
++
++
+     //  View implementation
+     override fun loadResult(result: Result) {
+         adapter.setupForecastList(result)
+Index: app/src/main/res/layout/fragment_forecast.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/res/layout/fragment_forecast.xml	(revision bacb54dab17d5fa50e0ee13667a96335655924c8)
++++ app/src/main/res/layout/fragment_forecast.xml	(date 1573155216146)
+@@ -1,21 +1,30 @@
+ <?xml version="1.0" encoding="utf-8"?>
+-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+-             xmlns:tools="http://schemas.android.com/tools"
+-             android:layout_width="match_parent"
+-             android:layout_height="match_parent"
+-             tools:context=".ui.forecast.ForecastFragment">
++<RelativeLayout
++        xmlns:android="http://schemas.android.com/apk/res/android"
++        xmlns:tools="http://schemas.android.com/tools"
++        android:layout_width="match_parent"
++        android:layout_height="match_parent"
++        tools:context=".ui.forecast.ForecastFragment"
++        android:background="#4E555A">
++
++    <ImageView
++            android:id="@+id/locaton_img"
++            android:layout_width="match_parent"
++            android:layout_height="210dp"/>
+ 
+     <androidx.recyclerview.widget.RecyclerView
+             android:id="@+id/three_hours_forecast_recyclerview"
++            android:layout_below="@id/locaton_img"
+             android:layout_width="match_parent"
+             android:layout_height="match_parent">
+     </androidx.recyclerview.widget.RecyclerView>
+ 
+     <TextView
++            android:textColor="@android:color/darker_gray"
+             android:id="@+id/loading_txt"
+             android:text="Loading..."
+             android:layout_width="match_parent"
+             android:layout_height="match_parent"
+             android:gravity="center"/>
+ 
+-</FrameLayout>
+\ No newline at end of file
++</RelativeLayout>
+\ No newline at end of file
+Index: app/src/main/java/com/arsoft/fishcast/ui/main/MainActivity.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/arsoft/fishcast/ui/main/MainActivity.kt	(revision bacb54dab17d5fa50e0ee13667a96335655924c8)
++++ app/src/main/java/com/arsoft/fishcast/ui/main/MainActivity.kt	(date 1572903273339)
+@@ -1,21 +1,30 @@
+ package com.arsoft.fishcast.ui.main
+ 
++import android.content.Context
++import android.content.pm.PackageManager
++import android.location.LocationManager
+ import android.os.Bundle
++import androidx.core.app.ActivityCompat
++import androidx.core.content.ContextCompat
+ import com.arellomobile.mvp.MvpAppCompatActivity
+ import com.arsoft.fishcast.FishcastApplication
+ import com.arsoft.fishcast.R
+ import com.arsoft.fishcast.Screens
++import com.google.android.gms.location.FusedLocationProviderClient
+ import ru.terrakok.cicerone.NavigatorHolder
+ import ru.terrakok.cicerone.android.support.SupportAppNavigator
+ import ru.terrakok.cicerone.commands.Command
+ import ru.terrakok.cicerone.commands.Replace
+ import javax.inject.Inject
+ 
++
+ class MainActivity : MvpAppCompatActivity(){
+ 
+     @Inject
+     lateinit var navigatorHolder: NavigatorHolder
+ 
++    private lateinit var fusedLocationClient: FusedLocationProviderClient
++
+     private val navigator = object : SupportAppNavigator(this, R.id.main_container) {
+         override fun applyCommands(commands: Array<Command>) {
+             super.applyCommands(commands)
+@@ -27,7 +36,22 @@
+         FishcastApplication.INSTANCE.getAppComponent()!!.inject(this)
+         super.onCreate(savedInstanceState)
+         setContentView(R.layout.activity_main)
+-        navigator.applyCommands(arrayOf(Replace(Screens.ChooseLocationScreen())))
++
++        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
++            ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.ACCESS_COARSE_LOCATION), 0)
++        }
++
++        val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
++        val locationProvider = LocationManager.NETWORK_PROVIDER
++        val lastKnownLocation = locationManager.getLastKnownLocation(locationProvider)
++
++
++
++        if (lastKnownLocation != null) {
++            navigator.applyCommands(arrayOf(Replace(Screens.ForecastScreen(lastKnownLocation.latitude, lastKnownLocation.longitude))))
++        } else {
++            navigator.applyCommands(arrayOf(Replace(Screens.ChooseLocationScreen())))
++        }
+     }
+ 
+     override fun onResumeFragments() {
+Index: app/src/main/res/layout/fragment_choose_location.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/res/layout/fragment_choose_location.xml	(revision bacb54dab17d5fa50e0ee13667a96335655924c8)
++++ app/src/main/res/layout/fragment_choose_location.xml	(date 1572990341945)
+@@ -1,9 +1,11 @@
+ <?xml version="1.0" encoding="utf-8"?>
+-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+-             xmlns:tools="http://schemas.android.com/tools"
+-             android:layout_width="match_parent"
+-             android:layout_height="match_parent"
+-             tools:context=".ui.location.ChooseLocationFragment">
++<FrameLayout
++        xmlns:android="http://schemas.android.com/apk/res/android"
++        xmlns:tools="http://schemas.android.com/tools"
++        android:layout_width="match_parent"
++        android:layout_height="match_parent"
++        tools:context=".ui.location.ChooseLocationFragment"
++        android:background="#4E555A">
+ 
+     <!-- TODO: Update blank fragment layout -->
+     <LinearLayout
+@@ -13,6 +15,7 @@
+             android:gravity="center"
+             android:layout_gravity="center">
+         <TextView
++                android:textColor="@android:color/darker_gray"
+                 android:layout_width="wrap_content"
+                 android:layout_height="wrap_content"
+                 android:text="Choose location"/>
+@@ -27,8 +30,9 @@
+                 android:id="@+id/chooseLocationBtn"
+                 android:layout_width="wrap_content"
+                 android:layout_height="wrap_content"
+-                android:text="Choose"/>
++                android:text="Choose"
++                android:layout_marginEnd="16dp"/>
++
+     </LinearLayout>
+ 
+-
+ </FrameLayout>
+\ No newline at end of file
+Index: app/src/main/java/com/arsoft/fishcast/mvp/forecast/ThreeHoursForecastPresenter.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/arsoft/fishcast/mvp/forecast/ThreeHoursForecastPresenter.kt	(revision bacb54dab17d5fa50e0ee13667a96335655924c8)
++++ app/src/main/java/com/arsoft/fishcast/mvp/forecast/ThreeHoursForecastPresenter.kt	(date 1572991619532)
+@@ -2,14 +2,16 @@
+ 
+ import com.arellomobile.mvp.InjectViewState
+ import com.arellomobile.mvp.MvpPresenter
++import com.arsoft.fishcast.Screens
+ import com.arsoft.fishcast.data.repository.ForecastProvider
+ import io.reactivex.Scheduler
+ import io.reactivex.android.schedulers.AndroidSchedulers
+ import io.reactivex.schedulers.Schedulers
++import ru.terrakok.cicerone.Router
+ import java.lang.Exception
+ 
+ @InjectViewState
+-class ThreeHoursForecastPresenter: MvpPresenter<ThreeHoursForecastView>(){
++class ThreeHoursForecastPresenter(private var router: Router): MvpPresenter<ThreeHoursForecastView>(){
+ 
+     private val forecastRepository = ForecastProvider.provideHourlyForecastRepository()
+ 
+@@ -29,6 +31,9 @@
+                 viewState.showError(error.message.toString())
+                 error.printStackTrace()
+             })
++    }
+ 
++    fun onChooseLocationOnMapClicked() {
++        router.navigateTo(Screens.ChooseLocationScreen())
+     }
+ }
+\ No newline at end of file
+Index: app/src/main/res/values/colors.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/res/values/colors.xml	(revision bacb54dab17d5fa50e0ee13667a96335655924c8)
++++ app/src/main/res/values/colors.xml	(date 1572990170688)
+@@ -1,6 +1,6 @@
+ <?xml version="1.0" encoding="utf-8"?>
+ <resources>
+-    <color name="colorPrimary">#008577</color>
+-    <color name="colorPrimaryDark">#00574B</color>
++    <color name="colorPrimary">#2D2E2E</color>
++    <color name="colorPrimaryDark">#292626</color>
+     <color name="colorAccent">#D81B60</color>
+ </resources>
+Index: app/build.gradle
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/build.gradle	(revision bacb54dab17d5fa50e0ee13667a96335655924c8)
++++ app/build.gradle	(date 1572989100885)
+@@ -67,8 +67,13 @@
+     implementation "com.google.dagger:dagger:$daggerVersion"
+     kapt "com.google.dagger:dagger-compiler:$daggerVersion"
+ 
++    //glide
++    implementation 'com.github.bumptech.glide:glide:4.10.0'
++    kapt 'com.github.bumptech.glide:compiler:4.10.0'
++
+     testImplementation 'junit:junit:4.12'
+     androidTestImplementation 'com.android.support.test:runner:1.0.2'
+     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+     implementation 'com.google.android.gms:play-services-maps:17.0.0'
++    implementation 'com.google.android.gms:play-services-location:17.0.0'
+ }
