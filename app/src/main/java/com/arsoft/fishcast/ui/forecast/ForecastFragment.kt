@@ -17,6 +17,7 @@ import com.arsoft.fishcast.mvp.forecast.ThreeHoursForecastPresenter
 import com.arsoft.fishcast.mvp.forecast.ThreeHoursForecastView
 import kotlinx.android.synthetic.main.fragment_forecast.*
 import ru.terrakok.cicerone.Router
+import java.util.*
 import javax.inject.Inject
 
 class ForecastFragment : MvpAppCompatFragment(), ThreeHoursForecastView {
