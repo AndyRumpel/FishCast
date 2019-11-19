@@ -5,5 +5,6 @@ data class ThreeHoursForecastModel(
     val weatherDescription: String,
     val time: String,
     val date: String,
-    val icon: String
+    val icon: String,
+    val baitProbabilityPercentage: Int
 )

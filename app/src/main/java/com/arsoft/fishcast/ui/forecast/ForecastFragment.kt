@@ -17,13 +17,12 @@ import com.arsoft.fishcast.mvp.forecast.ThreeHoursForecastPresenter
 import com.arsoft.fishcast.mvp.forecast.ThreeHoursForecastView
 import kotlinx.android.synthetic.main.fragment_forecast.*
 import ru.terrakok.cicerone.Router
-import java.util.*
 import javax.inject.Inject
 
 class ForecastFragment : MvpAppCompatFragment(), ThreeHoursForecastView {
-
     //MARK -
     companion object {
+
         fun getNewInstance(lat: Double, lon: Double) = ForecastFragment().apply {
             arguments = Bundle().apply {
                 putDouble("lat", lat)
@@ -31,35 +30,34 @@ class ForecastFragment : MvpAppCompatFragment(), ThreeHoursForecastView {
             }
         }
     }
-
     //MARK - injects
     @Inject lateinit var router: Router
 
     //MARK - presenter setup
     @InjectPresenter
     lateinit var threeHoursForecastPresenter: ThreeHoursForecastPresenter
+
     @ProvidePresenter
     internal fun providePresenter(): ThreeHoursForecastPresenter {
         return ThreeHoursForecastPresenter(router)
     }
-
-
     init {
         FishcastApplication.INSTANCE.getAppComponent()!!.inject(this)
     }
 
+
     //MARK - local variables
     private lateinit var adapter: ThreeHoursForecastRecyclerAdapter
+
     private lateinit var threeHoursForecastRecyclerView: RecyclerView
     private val TAG = "MyTag"
-
-
-
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         val view = inflater.inflate(R.layout.fragment_forecast, container, false)
         threeHoursForecastRecyclerView = view.findViewById(R.id.three_hours_forecast_recyclerview)
         return view
     }
+
+
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -88,16 +86,14 @@ class ForecastFragment : MvpAppCompatFragment(), ThreeHoursForecastView {
         return super.onOptionsItemSelected(item)
     }
 
-
     //MARK - view implementation
-    override fun loadResult(result: Result) {
+    override fun loadWeather(result: Result) {
         adapter.setupForecastList(result)
     }
 
     override fun showLoading() {
         loading_cpv.visibility = View.VISIBLE
         threeHoursForecastRecyclerView.visibility = View.INVISIBLE
-        location_name_txt.visibility = View.INVISIBLE
     }
 
     override fun hideLoadind() {
@@ -112,7 +108,6 @@ class ForecastFragment : MvpAppCompatFragment(), ThreeHoursForecastView {
 
     override fun showForecast() {
         threeHoursForecastRecyclerView.visibility = View.VISIBLE
-        location_name_txt.visibility = View.VISIBLE
         adapter.notifyDataSetChanged()
     }
 

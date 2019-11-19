@@ -38,7 +38,8 @@ class ThreeHoursForecastRecyclerAdapter: RecyclerView.Adapter<RecyclerView.ViewH
                         weatherDescription = weather[0].description,
                         time = MyDateTimeFormatter.timeFormat((1000*dt)),
                         date = MyDateTimeFormatter.dateFormat((1000*dt)),
-                        icon = weather[0].icon
+                        icon = weather[0].icon,
+                        baitProbabilityPercentage = baitProbabilityPercentage
                     )
                 }
             )
@@ -58,6 +59,7 @@ class ThreeHoursForecastRecyclerAdapter: RecyclerView.Adapter<RecyclerView.ViewH
         private val time = itemView.findViewById<TextView>(R.id.time_txt)
         private val date = itemView.findViewById<TextView>(R.id.date_txt)
         private val weatherIcon = itemView.findViewById<ImageView>(R.id.weather_icon)
+        private val baitPercentage = itemView.findViewById<TextView>(R.id.bait_percentage_txt)
 
         fun bind(model: ThreeHoursForecastModel) {
 
@@ -65,11 +67,16 @@ class ThreeHoursForecastRecyclerAdapter: RecyclerView.Adapter<RecyclerView.ViewH
                 .load(BASE_ICON_URL + model.icon + "@2x.png")
                 .into(weatherIcon)
 
-            temperatureTxt.text = model.temperature
+            if (model.temperature.dropLast(1).toInt() <= 0) {
+                temperatureTxt.text = model.temperature
+            } else {
+                temperatureTxt.text = "+" + model.temperature
+            }
+
             weatherDescription.text = model.weatherDescription
             time.text = model.time
             date.text = model.date
-
+            baitPercentage.text = model.baitProbabilityPercentage.toString() + "%"
         }
     }
 }

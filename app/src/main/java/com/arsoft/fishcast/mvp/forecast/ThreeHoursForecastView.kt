@@ -10,7 +10,7 @@ interface ThreeHoursForecastView: MvpView {
     fun showLoading()
     fun hideLoadind()
     fun showForecast()
-    fun loadResult(result: Result)
+    fun loadWeather(result: Result)
     fun showNothing()
     fun showError(errorText: String)
 }
